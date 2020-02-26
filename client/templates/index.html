@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    <title>Blockchain Client</title>
+    <style> 
+        /* Modify the background color */ 
+          
+        .navbar-custom { 
+            background-color: gold; 
+        } 
+        /* Modify brand and text color */ 
+          
+        .navbar-custom .navbar-brand { 
+            color: white; 
+        } 
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-custom navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a href="#" class="navbar-brand">Blockchain Client</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/">Generate Wallet</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/make-transaction">Make Transaction</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/view-transactions">View Transactions</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 text-center">
+                <div class="card-body">
+                    <h4 class="card-title">Wallet Generator</h4>
+                    <p class="card-text">Click on the button below to generate your blockchain wallet</p>
+                    <input type="button" class="btn btn-primary btn-lg" value="Generate Wallet">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <label class="col-sm-2">Public Key:</label>
+            <div class="col-sm-10">
+                <textarea id="public_key" rows="5" class="form-control" readonly></textarea>
+            </div>
+        </div>
+
+        <br>
+
+        <div class="row">
+            <label class="col-sm-2">Private Key:</label>
+            <div class="col-sm-10">
+                <textarea id="private_key" rows="5" class="form-control" readonly></textarea>
+            </div>
+        </div>
+
+        <a href="/download/public_key.png" id="public-down-link" style="display: none;" download="public_key.png">Public QR</a>
+        <a href="/download/private_key.png" id="private-down-link" style="display: none;" download="private_key.png">Private QR</a>
+        <a href="/download/public_key.txt" id="public-txt-link" style="display: none;" download="public_key.txt">Public txt</a>
+        <a href="/download/private_key.txt" id="private-txt-link" style="display: none;" download="private_key.txt">Private txt</a>
+
+        <br>
+
+        <div class="row" id="warning" style="display:none">
+            <div class="col-sm-12">
+                <div class="alert alert-danger" role="alert">
+                    <b>Please Note:</b>
+                    <br>
+                    Your public and private keys are downloaded in the following formats for convenience:
+                    <ol>
+                        <li>QR Code images: public_key.png, private_key.png</li>
+                        <li>Text files: public_key.txt, private_key.txt</li>
+                    </ol>
+                    IMPORTANT
+                    <ul>
+                        <li>Save your private and public keys. These keys cannot be recovered if lost!</li>
+                        <li>Don't share your private key with anyone!</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Message for successful transaction -->
+    <div class="modal modal-alert fade" id="important-note" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+  
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                </div>
+  
+                <div class="modal-body">
+                    <div class="alert alert-warning" role="alert">
+                        <h4 class="alert-heading">Please Note:</h4>
+                        <br>
+                        Your public and private keys are downloaded in the following formats for convenience:
+                        <ol>
+                            <li>QR Code images: public_key.png, private_key.png</li>
+                            <li>Text files: public_key.txt, private_key.txt</li>
+                        </ol>
+                        IMPORTANT
+                        <ul>
+                            <li>Save your private and public keys. These keys cannot be recovered if lost!</li>
+                            <li>Don't share your private key with anyone!</li>
+                        </ul>
+                    </div>
+                </div>
+  
+                <div class="modal-footer">
+                    <button type="button" id="button_ok" class="btn btn-warning" data-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+    crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-ellipsis@0.1.6/dist/jquery.ellipsis.min.js"></script>
+
+    <script>
+        $(function() {
+            $('input').click(function() {
+                $.ajax({
+                    url: '/new-wallet',
+                    type: 'GET',
+                    success: function(response) {
+                        document.getElementById('public_key').innerHTML = response['public_key'];
+                        document.getElementById('private_key').innerHTML = response['private_key'];
+                        document.getElementById('warning').style.display = 'block';
+                        // document.getElementById('public-down-link').click();
+                        // document.getElementById('private-down-link').click();
+                        // document.getElementById('public-txt-link').click();
+                        // document.getElementById('private-txt-link').click();
+                        $('#important-note').modal('show');
+                    },
+                    error: function(error) {
+                        console.log(error);
+                    },
+                });
+            });
+        });
+    </script>
+</body>
+</html>

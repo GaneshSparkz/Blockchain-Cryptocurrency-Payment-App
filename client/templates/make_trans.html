@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    <title>Blockchain Client</title>
+    <style> 
+        /* Modify the background color */ 
+          
+        .navbar-custom { 
+            background-color: gold; 
+        } 
+        /* Modify brand and text color */ 
+          
+        .navbar-custom .navbar-brand, 
+        .navbar-custom .nav-link { 
+            color: white; 
+        } 
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-custom navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a href="/" class="navbar-brand">Blockchain Client</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Generate Wallet</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/make-transaction">Make Transaction</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/view-transactions">View Transactions</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 text-center">
+                <div class="card-body">
+                    <h4 class="card-title">Send Coins</h4>
+                    <p class="card-text">Enter transaction details and click on 'Send' to pay.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container alert alert-secondary">
+        <form class="form-group" id="transaction-form">
+            <div class="row">
+                <label for="sender-address" class="col-sm-2">Your Public key</label>
+                <div class="col-sm-8">
+                    <input type="text" name="sender_address" class="form-control" id="sender-address">
+                </div>
+                <div class="col-sm-2">
+                    <button type="button" id="qr-sender-address" class="btn btn-outline-primary">
+                        <i class="fa fa-qrcode fa-lg" aria-hidden="true"></i>
+                        Scan QR code
+                    </button>
+                </div>
+            </div>
+            <br>
+            <div class="row">
+                <label for="sender-private-key" class="col-sm-2">Your Private key</label>
+                <div class="col-sm-8">
+                    <input type="password" name="sender_private_key" class="form-control" id="sender-private-key">
+                </div>
+                <div class="col-sm-2">
+                    <button type="button" id="qr-sender-private" class="btn btn-outline-primary">
+                        <i class="fa fa-qrcode fa-lg" aria-hidden="true"></i>
+                        Scan QR code
+                    </button>
+                </div>
+            </div>
+            <br>
+            <div class="row">
+                <label for="recipient-address" class="col-sm-2">Recipient Address</label>
+                <div class="col-sm-8">
+                    <input type="text" name="recipient_address" class="form-control" id="recipient-address">
+                </div>
+                <div class="col-sm-2">
+                    <button type="button" id="qr-recipient-address" class="btn btn-outline-primary">
+                        <i class="fa fa-qrcode fa-lg" aria-hidden="true"></i>
+                        Scan QR code
+                    </button>
+                </div>
+            </div>
+            <br>
+            <div class="row">
+                <label for="amount" class="col-sm-2">Amount</label>
+                <div class="col-sm-8">
+                    <input type="text" name="amount" class="form-control" id="amount">
+                </div>
+            </div>
+            <br>
+            <div class="row">
+                <div class="col-sm-12 text-center">
+                    <button class="btn btn-success" id="send" type="button">Send</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal modal-alert fade" id="basic_modal" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
+        <div class="modal-dialog">
+  
+            <div class="modal-content">
+  
+                <div class="modal-header">
+                <div class="modal-title col-md-10">Confirm transaction details, enter a blockchain node url and click on "Confirm Transaction" to finalize your transaction.</div>
+                <button type="button" class="close col-md-2" data-dismiss="modal" aria-hidden="true">&times;</button>
+                </div>
+  
+                <div class="modal-body">
+    
+                <form id="confirmation_transaction_form" class="form-group">
+    
+                    <div class="row">
+                        <label class="col-sm-12">Sender Public Key:</label>
+                        <div class="col-sm-12">
+                        <input type="text" name="confirmation_sender_public_key" id="confirmation_sender_public_key" rows="2" class="form-control" readonly>
+    
+                        </div>
+                    </div>
+    
+                    <div class="row">
+                        <label class="col-sm-12">Recipient Public Key:</label>
+                        <div class="col-sm-12">
+                        <input type="text" name="confirmation_recipient_public_key" id="confirmation_recipient_public_key" rows="2" class="form-control" readonly>
+                        </div>
+                    </div>
+    
+                    <div class="row">
+                        <label class="col-sm-12">Amount to Send:</label>
+                        <div class="col-sm-12">
+                        <input type="text" name="confirmation_amount" id="confirmation_amount" rows="2" class="form-control" readonly>
+                        </div>
+                    </div>
+    
+                    <div class="row">
+                        <label class="col-sm-12">Transaction Signature:</label>
+                        <div class="col-sm-12">
+                        <input type="text" name="transaction_signature" id="transaction_signature" rows="2" class="form-control" readonly>
+                        </div>
+                    </div>
+    
+                </form>
+    
+    
+                <div class="row">
+                    <label class="col-sm-12">Blockchain Node URL:</label>
+                    <div class="col-sm-12">
+                        <input type="text" name="node_url" id="node_url" rows="2" class="form-control" value="http://127.0.0.1:5000">
+                    </div>
+                </div>
+  
+            </div>
+  
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+                <button type="button" id="button_confirm" class="btn btn-success">Confirm Transaction</button>
+            </div>
+  
+          </div>
+  
+        </div>
+    </div>
+
+    <!-- Alert Message for successful transaction -->
+    <div class="modal modal-alert fade" id="success_transaction_modal" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+  
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                </div>
+  
+                <div class="modal-body">
+                    <div class="alert alert-success" role="alert">
+                        <h4 class="alert-heading">Successful Transaction!</h4>
+                        <p>You successfully completed your transaction. It will be added to the next block.</p>
+                    </div>
+                </div>
+  
+                <div class="modal-footer">
+                    <button type="button" id="button_confirm_transaction" class="btn btn-success" data-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Message for successful transaction -->
+    <div class="modal modal-alert fade" id="failed_transaction_modal" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+  
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                </div>
+  
+                <div class="modal-body">
+                    <div class="alert alert-danger" role="alert">
+                        <h4 class="alert-heading">Transaction Failed!</h4>
+                        <p>The transaction is not completed. Please check the keys you entered.</p>
+                    </div>
+                </div>
+  
+                <div class="modal-footer">
+                    <button type="button" id="button_confirm_transaction" class="btn btn-danger" data-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-alert fade" id="modal-sender-address" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+  
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                </div>
+  
+                <div class="modal-body text-center">
+                    <div class="alert alert-primary text-center" role="alert">
+                        <h4 class="alert-heading">Public key</h4>   
+                    </div>
+                    <video id="preview-sender-address" width="100%"></video>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-alert fade" id="modal-sender-private" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+  
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                </div>
+  
+                <div class="modal-body">
+                    <div class="alert alert-primary text-center" role="alert">
+                        <h4 class="alert-heading">Private key</h4>
+                    </div>
+                    <video id="preview-sender-private" width="100%"></video>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-alert fade" id="modal-recipient-address" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+  
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                </div>
+  
+                <div class="modal-body">
+                    <div class="alert alert-primary text-center" role="alert">
+                        <h4 class="alert-heading">Recipient Address</h4>
+                    </div>
+                    <video id="preview-recipient-address" width="100%"></video>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+    crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-ellipsis@0.1.6/dist/jquery.ellipsis.min.js"></script>
+    <script type="text/javascript" src="https://rawcdn.githack.com/tobiasmuehl/instascan/4224451c49a701c04de7d0de5ef356dc1f701a93/bin/instascan.min.js"></script>
+    
+    <script>
+        $(function() {
+            // $('#recipient-address').val('3076301006072a8648ce3d020106052b8104002203620004a7aad1a9726a8e5bf1dd3bee169952354c082d45b2ebdea101e531a1de6d9999a11cf585a327aef16d03a60998a9c774cb9918e9fc7dfaee2cc83063abb68c094380b8c8061c0f867b06c3dab5a7c700af498586e1b7ea6a1bbbcdd8cc2e347a');
+            /* $.ajax({
+                url: '/amount/get',
+                type: 'GET',
+                success: function(response) {
+                    $('#amount').val(response['amount']);
+                },
+                error: function(error) {
+                    console.log(error);
+                }
+            }); */
+            $('#qr-sender-address').click(function() {
+                $('#modal-sender-address').modal('show');
+                let scanner = new Instascan.Scanner({ video: document.getElementById('preview-sender-address') });
+                scanner.addListener('scan', function (content) {
+                    $('#sender-address').val(content);
+                    $('#sender-address').prop('readonly', true);
+                    scanner.stop();
+                    $('#modal-sender-address').modal('hide');
+                });
+                Instascan.Camera.getCameras().then(function (cameras) {
+                    if (cameras.length > 0) {
+                    scanner.start(cameras[0]);
+                    } else {
+                    console.error('No cameras found.');
+                    }
+                }).catch(function (e) {
+                    console.error(e);
+                });
+            });
+
+            $('#qr-sender-private').click(function() {
+                $('#modal-sender-private').modal('show');
+                let scanner = new Instascan.Scanner({ video: document.getElementById('preview-sender-private') });
+                scanner.addListener('scan', function (content) {
+                    $('#sender-private-key').val(content);
+                    $('#sender-private-key').prop('readonly', true);
+                    scanner.stop();
+                    $('#modal-sender-private').modal('hide');
+                });
+                Instascan.Camera.getCameras().then(function (cameras) {
+                    if (cameras.length > 0) {
+                    scanner.start(cameras[0]);
+                    } else {
+                    console.error('No cameras found.');
+                    }
+                }).catch(function (e) {
+                    console.error(e);
+                });
+            });
+
+            $('#qr-recipient-address').click(function() {
+                $('#modal-recipient-address').modal('show');
+                let scanner = new Instascan.Scanner({ video: document.getElementById('preview-recipient-address') });
+                scanner.addListener('scan', function (content) {
+                    $('#recipient-address').val(content);
+                    $('#recipient-address').prop('readonly', true);
+                    scanner.stop();
+                    $('#modal-recipient-address').modal('hide');
+                });
+                Instascan.Camera.getCameras().then(function (cameras) {
+                    if (cameras.length > 0) {
+                    scanner.start(cameras[0]);
+                    } else {
+                    console.error('No cameras found.');
+                    }
+                }).catch(function (e) {
+                    console.error(e);
+                });
+            });
+
+            $('#send').click(function() {
+                $.ajax({
+                    url: '/transaction/generate',
+                    type: 'POST',
+                    data: $('#transaction-form').serialize(),
+                    success: function(response) {
+                        document.getElementById('confirmation_sender_public_key').value = response['transaction']['sender_address'];
+                        document.getElementById('confirmation_recipient_public_key').value = response['transaction']['recipient_address'];
+                        document.getElementById('confirmation_amount').value = response['transaction']['amount'];
+                        document.getElementById('transaction_signature').value = response['signature'];
+
+                        $('#basic_modal').modal('show');
+                    },
+                    error: function(error) {
+                        console.log(error);
+                    },
+                });
+            });
+
+            $('#button_confirm').click(function() {
+                $.ajax({
+                    url: document.getElementById('node_url').value + '/transactions/new',
+                    type: 'POST',
+                    dataType: 'json',
+                    headers: {'Access-Control-Allow-Origin': '*'},
+                    data: $('#confirmation_transaction_form').serialize(),
+                    success: function(response) {
+                        $('#sender-address').val('');
+                        $('#sender-private-key').val('');
+                        $('#recipient-address').val('');
+                        $('#amount').val('');
+                        $('#sender-address').prop('readonly', false);
+                        $('#sender-private-key').prop('readonly', false);
+                        $('#recipient-address').prop('readonly', false);
+
+                        $('#basic_modal').modal('hide');
+                        $('#success_transaction_modal').modal('show');
+                    },
+                    error: function(error) {
+                        $('#basic_modal').modal('hide');
+                        $('#failed_transaction_modal').modal('show');
+                    },
+                });
+            });
+        });
+    </script>
+</body>
+</html>

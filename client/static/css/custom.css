@@ -1,0 +1,8 @@
+body {
+	padding-top: 54px;
+}
+
+.navbar-custom {
+	background-color: gold !important;
+	color: white !important;
+}

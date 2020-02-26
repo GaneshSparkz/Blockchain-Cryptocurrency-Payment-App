@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    <title>Blockchain Node</title>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container">
+            <a href="#" class="navbar-brand">Blockchain Node</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/configure">Configure</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 text-center">
+                <div class="card-body">
+                    <h4 class="card-title">Transactions to be added to the next block</h4>
+                    <button type="button" id="refresh-transactions" class="btn btn-outline-primary">
+                        <i class="fa fa-refresh"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <table class="table table-bordered" id="unmined-transactions-table" cellspacing="0" width="100%">
+            
+        </table>
+        <div class="col-lg-12 text-center"><button type="button" id="mine-button" class="btn btn-primary btn-lg">Mine</button></div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 text-center">
+                <div class="card-body">
+                    <h4 class="card-title">Transactions on the Blockchain</h4>
+                    <button type="button" id="refresh-blockchain" class="btn btn-outline-primary">
+                        <i class="fa fa-refresh"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <table class="table table-bordered" id="transactions-table" cellspacing="0" width="100%">
+            
+        </table>
+    </div>
+
+    <!-- Alert Message if no transaction -->
+    <div class="modal modal-alert fade" id="failed_mining_modal" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+  
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                </div>
+  
+                <div class="modal-body">
+                    <div class="alert alert-danger" role="alert">
+                        <h4 class="alert-heading">No Transactions!</h4>
+                        <p id="error-message"></p>
+                    </div>
+                </div>
+  
+                <div class="modal-footer">
+                    <button type="button" id="button_confirm_transaction" class="btn btn-danger" data-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>  
+
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+    crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-ellipsis@0.1.6/dist/jquery.ellipsis.min.js"></script>
+
+    <script>
+        $(function() {
+            $.ajax({
+                url: '/chain/get',
+                type: 'GET',
+                success: function(response) {
+                    let transactions = [];
+                    let count = 1;
+                    for (let i = 0; i < response['length']; i++) {
+                        for (let j = 0; j < response['chain'][i]['transactions'].length; j++) {
+                            let options = {  year: "numeric", month: "short",  day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit"  };
+                            let date = new Date(response["chain"][i]["timestamp"] * 1000);
+                            formattedTimestamp = date.toLocaleTimeString('en-US', options);
+                            let transaction = [
+                                count,
+                                response['chain'][i]['transactions'][j]['sender_address'],
+                                response['chain'][i]['transactions'][j]['recipient_address'],
+                                response['chain'][i]['transactions'][j]['amount'],
+                                formattedTimestamp,
+                                response['chain'][i]['block_no'],
+                            ];
+                            transactions.push(transaction);
+                            count += 1; 
+                        } 
+                    }
+
+                    $.fn.dataTable.render.ellipsis = function ( cutoff ) {
+                        return function ( data, type, row ) {
+                            return type === 'display' && data.length > cutoff ?
+                                data.substr( 0, cutoff ) +'…' :
+                                data;
+                        }
+                    };
+
+                    $('#transactions-table').dataTable({
+                        data: transactions,
+                        columns: [
+                            {title: '#'},
+                            {title: 'Sender Address'},
+                            {title: 'Recipient Address'},
+                            {title: 'Amount'},
+                            {title: 'Timestamp'},
+                            {title: 'Block'},
+                        ],
+                        columnDefs: [{targets: [1, 2, 3, 4, 5], render: $.fn.dataTable.render.ellipsis(25)}]
+                    });
+                },
+                error: function(error) {
+                    console.log(error);
+                }
+            });
+
+            $('#refresh-blockchain').click(function() {
+                $.ajax({
+                    url: '/chain/get',
+                    type: 'GET',
+                    success: function(response) {
+                        let transactions = [];
+                        let count = 1;
+                        for (let i = 0; i < response['length']; i++) {
+                            for (let j = 0; j < response['chain'][i]['transactions'].length; j++) {
+                                let options = {  year: "numeric", month: "short",  day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit"  };
+                                let date = new Date(response["chain"][i]["timestamp"] * 1000);
+                                formattedTimestamp = date.toLocaleTimeString('en-US', options);
+                                let transaction = [
+                                    count,
+                                    response['chain'][i]['transactions'][j]['sender_address'],
+                                    response['chain'][i]['transactions'][j]['recipient_address'],
+                                    response['chain'][i]['transactions'][j]['amount'],
+                                    formattedTimestamp,
+                                    response['chain'][i]['block_no'],
+                                ];
+                                transactions.push(transaction);
+                                count += 1; 
+                            } 
+                        }
+
+                        $.fn.dataTable.render.ellipsis = function ( cutoff ) {
+                            return function ( data, type, row ) {
+                                return type === 'display' && data.length > cutoff ?
+                                    data.substr( 0, cutoff ) +'…' :
+                                    data;
+                            }
+                        };
+
+                        $('#transactions-table').dataTable({
+                            destroy: true,
+                            data: transactions,
+                            columns: [
+                                {title: '#'},
+                                {title: 'Sender Address'},
+                                {title: 'Recipient Address'},
+                                {title: 'Amount'},
+                                {title: 'Timestamp'},
+                                {title: 'Block'},
+                            ],
+                            columnDefs: [{targets: [1, 2, 3, 4, 5], render: $.fn.dataTable.render.ellipsis(25)}]
+                        });
+                    },
+                    error: function(error) {
+                        console.log(error);
+                    }
+                });
+            });
+
+            $.ajax({
+                url: 'transactions/get',
+                type: 'GET',
+                success: function(response) {
+                    let transactions = [];
+                    let count = 1;
+                    for (let i = 0; i < response['transactions'].length; i++) {
+                        let transaction = [
+                            count,
+                            response['transactions'][i]['sender_address'],
+                            response['transactions'][i]['recipient_address'],
+                            response['transactions'][i]['amount'],
+                        ];
+                        transactions.push(transaction);
+                        count += 1;
+                    }
+
+                    $.fn.dataTable.render.ellipsis = function ( cutoff ) {
+                        return function ( data, type, row ) {
+                            return type === 'display' && data.length > cutoff ?
+                                data.substr( 0, cutoff ) +'…' :
+                                data;
+                        }
+                    };
+
+                    $('#unmined-transactions-table').dataTable({
+                        data: transactions,
+                        columns: [
+                            {title: '#'},
+                            {title: 'Sender Address'},
+                            {title: 'Recipient Address'},
+                            {title: 'Amount'},
+                        ],
+                        columnDefs: [{targets: [1, 2, 3], render: $.fn.dataTable.render.ellipsis(25)}]
+                    });
+                },
+                error: function(error) {
+                    console.log(error);
+                }
+            });
+            
+            $('#refresh-transactions').click(function() {
+                $.ajax({
+                    url: '/nodes/resolve',
+                    type: 'GET',
+                    success: function(response) {
+                        window.location.reload();
+                    },
+                    error: function(error) {
+                        console.log(error);
+                    }
+                });
+            });
+
+            $('#mine-button').click(function() {
+                $.ajax({
+                    url: '/mine',
+                    type: 'GET',
+                    success: function(response) {
+                        window.location.reload();
+                    },
+                    error: function(error) {
+                        $('#error-message').html(error.responseJSON['message']);
+                        $('#failed_mining_modal').modal('show');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
